@@ -16,11 +16,11 @@ export default class Contract {
 
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
-           
+
             this.owner = accts[0];
 
             let counter = 1;
-            
+
             while(this.airlines.length < 5) {
                 this.airlines.push(accts[counter++]);
             }
@@ -45,12 +45,31 @@ export default class Contract {
         let payload = {
             airline: self.airlines[0],
             flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        } 
+            timestamp: Math.floor(Date.now() / 1000),
+            status: ''
+        }
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner}, (error, result) => {
+            .send({ from: self.owner});
+
+
+            self.flightSuretyApp.getPastEvents('FlightStatusInfo',{
+                fromBlock: "latest"
+            }, function (error, events) {
+                if (error) {
+                    console.log(error)
+                }
+                console.log(events[0]);
+                //Lets override with the actual data..
+                payload.airline = events[0].returnValues.airline;
+                payload.flight = events[0].returnValues.flight;
+                payload.timestamp = events[0].returnValues.timestamp;
+                payload.status = events[0].returnValues.status;
                 callback(error, payload);
             });
+
+        //let eventReturnValues = self.flightSuretyApp.events.FlightStatusInfo().returnValues;
+        //console.log(`eventReturnValues ${eventReturnValues}`);
+
     }
 }

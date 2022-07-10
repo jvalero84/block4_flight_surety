@@ -66,6 +66,16 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier requireOracleRequestSubmitted(uint8 index,
+                                            address airline,
+                                            string flight,
+                                            uint256 timestamp)
+    {
+      bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+      require(oracleResponses[key].isOpen, "No request has been submitted for this flight.");
+      _;
+    }
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -258,14 +268,33 @@ contract FlightSuretyApp {
                             )
                             view
                             external
-                            returns(uint8[3])
+                            returns (uint8[3])
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
         return oracles[msg.sender].indexes;
     }
 
+    function hasConsensusBeenReached (
+                                    uint8 index,
+                                    address airline,
+                                    string flight,
+                                    uint256 timestamp,
+                                    uint8 statusCode
+                                    )
+                                    view
+                                    external
+                                    returns (bool)
+    {
+        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+        uint256 responsesCount = oracleResponses[key].responses[statusCode].length;
+        if (responsesCount >= MIN_RESPONSES){
+          return true;
+        } else {
+          return false;
+        }
 
+    }
 
 
     // Called by oracle when a response is available to an outstanding request
@@ -281,6 +310,8 @@ contract FlightSuretyApp {
                             uint8 statusCode
                         )
                         external
+                        //requireOracleRequestSubmitted(index, airline, flight, timestamp)
+                        //returns (bool)
     {
         require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 
@@ -294,12 +325,18 @@ contract FlightSuretyApp {
         // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
+            //Does it makes sense to keep processing responses for a specific airline-flight-timestamp once MIN_RESPONSES reached?
+            //oracleResponses[key].isOpen = false;
 
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
+
+            //return false; //To signal to the server that a consensus has been reached. No need to keep submitting responses.
         }
+
+        //return true;
     }
 
 
@@ -351,7 +388,8 @@ contract FlightSuretyApp {
         uint8 maxValue = 10;
 
         // Pseudo random number...the incrementing nonce adds variation
-        uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
+        nonce = nonce + 1;
+        uint8 random = uint8(uint256(keccak256(abi.encodePacked(block.timestamp, nonce, account))) % maxValue);
 
         if (nonce > 250) {
             nonce = 0;  // Can only fetch blockhashes for last 256 blocks so we adapt

@@ -242,6 +242,7 @@ contract FlightSuretyData {
 
    function isAirline (address airline)
                       view
+                      external
                       returns (bool)
    {
      return airlines[airline].isActive;
