@@ -17,6 +17,16 @@ import './flightsurety.css';
         });
 
 
+        // Add flight
+        DOM.elid('register-flight').addEventListener('click', () => {
+            let flight = DOM.elid('new-flight-number').value;
+            // Write transaction
+            contract.registerFlight(flight, (error, result) => {
+                display('Fligh registration', '', [ { label: 'New Flight Generated:', error: error, value: result} ]);
+                console.log(error, result);
+            });
+        });
+
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number').value;

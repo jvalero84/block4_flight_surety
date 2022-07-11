@@ -10,6 +10,14 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    // Flight status codees
+    uint8 private constant STATUS_CODE_UNKNOWN = 0;
+    uint8 private constant STATUS_CODE_ON_TIME = 10;
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
+    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
+    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
+    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     uint8 private activeAirlinesCounter;
@@ -25,6 +33,17 @@ contract FlightSuretyData {
       address account;
       uint256 balance;
     }
+
+    struct Flight {
+        bool isRegistered;
+        string flightNumber;
+        uint8 statusCode;
+        uint256 updatedTimestamp;
+        address airline;
+    }
+
+    mapping(bytes32 => Flight) private flights;
+
     mapping(address => bool) private authorizedCallers;
     mapping(address => Airline) private airlines;
     mapping(address => uint256) private registrationVotes;
@@ -118,6 +137,13 @@ contract FlightSuretyData {
       require(votingHistory[msg.sender][airline] == false, "You already voted to register this airline.");
       _;
     }
+
+    modifier requireIsActiveAirline(address airline)
+    {
+      require(isAirline(airline) == true, "Only active airlines can perform this operation.");
+      _;
+    }
+
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
@@ -242,10 +268,28 @@ contract FlightSuretyData {
 
    function isAirline (address airline)
                       view
-                      external
+                      public
                       returns (bool)
    {
      return airlines[airline].isActive;
+   }
+
+   function registerFlight
+                               (
+                                 string flightNumber,
+                                 uint256 timestamp
+                               )
+                               external
+                               requireIsOperational
+                               requireIsActiveAirline(msg.sender)
+   {
+     bytes32 key = getFlightKey(msg.sender, flightNumber, timestamp);
+     flights[key].isRegistered = true;
+     flights[key].flightNumber = flightNumber;
+     flights[key].updatedTimestamp = timestamp;
+     flights[key].airline = msg.sender;
+     flights[key].statusCode = STATUS_CODE_UNKNOWN;
+     //registeredFlights.push(key);
    }
 
 

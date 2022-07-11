@@ -20,8 +20,16 @@ export default class Contract {
             this.owner = accts[0];
 
             let counter = 1;
+            let self = this;
 
             while(this.airlines.length < 5) {
+                self.flightSuretyApp.methods
+                    .registerAirline(accts[counter],`AERO${counter}`)
+                    .send({
+                      from: "0xf17f52151EbEF6C7334FAD080c5704D77216b732",
+                      gas: 4712388,
+                      gasPrice: 100000000000
+                    })
                 this.airlines.push(accts[counter++]);
             }
 
@@ -38,6 +46,22 @@ export default class Contract {
        self.flightSuretyApp.methods
             .isOperational()
             .call({ from: self.owner}, callback);
+    }
+
+    // Function for registering a new flight
+    registerFlight(flightNumber, callback) {
+        let self = this;
+        let timestamp = Math.floor(Date.now() / 1000);
+        console.log(`from airline ${self.airlines[0]}`);
+        self.flightSuretyApp.methods
+            .registerFlight(flightNumber, timestamp)
+            .send({
+                from: self.airlines[0],
+                gas: 2000000,
+                gasPrice: 100000000000
+            }, (error, result) => {
+                callback(error, flightNumber);
+            });
     }
 
     fetchFlightStatus(flight, callback) {
