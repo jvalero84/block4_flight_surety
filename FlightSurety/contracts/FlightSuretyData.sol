@@ -21,8 +21,9 @@ contract FlightSuretyData {
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     uint8 private activeAirlinesCounter;
+    uint256 private regAirlinesCounter;
 
-    uint256 private constant AIRLINE_FUNDING_FEE = 10;
+    uint256 private constant AIRLINE_FUNDING_FEE = 1; //TODO: change to 10 eth
     uint256 private constant AIRLINE_REGISTRATION_CONSENSUS_PERCENT = 50;
     uint8 private constant MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS = 4;
 
@@ -53,8 +54,8 @@ contract FlightSuretyData {
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
 
-    event airlineFunded(string airline, uint256 balance);
-    event airlineRegistered(string airline);
+
+    event airlineRegistered(string airline, uint256 regAirlinesCounter);
 
     /**
     * @dev Constructor
@@ -78,6 +79,7 @@ contract FlightSuretyData {
           account: _firstAirline,
           balance: AIRLINE_FUNDING_FEE
         });
+        regAirlinesCounter = 1;
         activeAirlinesCounter = 1;
     }
 
@@ -144,7 +146,6 @@ contract FlightSuretyData {
       _;
     }
 
-
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -200,9 +201,11 @@ contract FlightSuretyData {
                               address airline,
                               string name
                             )
-                            external requireIsOperational
+                            external
+                            requireIsOperational
     {
         if(activeAirlinesCounter < MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS ){ // First MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS airlines are registered if submitted by a registered airline
+          require(airlines[tx.origin].isRegistered, "The airline submitting this request is not registered!");
           airlines[airline]= Airline({
             isRegistered: true,
             isActive: false,
@@ -210,7 +213,8 @@ contract FlightSuretyData {
             account: airline,
             balance: 0
           });
-          emit airlineRegistered(name);
+          regAirlinesCounter.add(1);
+          emit airlineRegistered(name, regAirlinesCounter);
         } else {
           airlines[airline]= Airline({
             isRegistered: false,
@@ -222,7 +226,6 @@ contract FlightSuretyData {
           registrationVotes[airline] = 0;
         }
 
-
     }
 
     function fundAirline (
@@ -232,16 +235,15 @@ contract FlightSuretyData {
                           payable
                           requireIsOperational
                           requireAirlineIsRegistered(airline)
-                          returns (uint256)
+                          returns (string, uint256)
    {
       require(msg.value >= AIRLINE_FUNDING_FEE, "Insuficients funds provided to fund the airline.");
 
-      airlines[airline].balance.add(msg.value);
+      airlines[airline].balance = airlines[airline].balance.add(msg.value);
       airlines[airline].isActive = true;
       activeAirlinesCounter.add(1);
-      emit airlineFunded(airlines[airline].name, airlines[airline].balance);
 
-      return airlines[airline].balance;
+      return (airlines[airline].name, airlines[airline].balance);
    }
 
    function voteToRegisterAirline
@@ -261,9 +263,18 @@ contract FlightSuretyData {
 
         if(registrationVotes[airline] >= registrationThreshold) {
           airlines[airline].isRegistered = true;
-          emit airlineRegistered(airlines[airline].name);
+          regAirlinesCounter.add(1);
+          emit airlineRegistered(airlines[airline].name, regAirlinesCounter);
         }
 
+   }
+
+   function getAirline(address airline)
+                      public
+                      view
+                      returns (bool,bool,string,address,uint256)
+   {
+     return (airlines[airline].isRegistered,airlines[airline].isActive,airlines[airline].name,airlines[airline].account,airlines[airline].balance);
    }
 
    function isAirline (address airline)
@@ -281,13 +292,13 @@ contract FlightSuretyData {
                                )
                                external
                                requireIsOperational
-                               requireIsActiveAirline(msg.sender)
+                               requireIsActiveAirline(tx.origin)
    {
-     bytes32 key = getFlightKey(msg.sender, flightNumber, timestamp);
+     bytes32 key = getFlightKey(tx.origin, flightNumber, timestamp);
      flights[key].isRegistered = true;
      flights[key].flightNumber = flightNumber;
      flights[key].updatedTimestamp = timestamp;
-     flights[key].airline = msg.sender;
+     flights[key].airline = tx.origin;
      flights[key].statusCode = STATUS_CODE_UNKNOWN;
      //registeredFlights.push(key);
    }

@@ -32,6 +32,7 @@ contract FlightSuretyApp {
 
     //uint8[] private flightStatusCodes = [STATUS_CODE_UNKNOWN, STATUS_CODE_ON_TIME, STATUS_CODE_LATE_AIRLINE, STATUS_CODE_LATE_WEATHER, STATUS_CODE_LATE_TECHNICAL, STATUS_CODE_LATE_OTHER];
 
+    event airlineFunded(string airline, uint256 balance);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -116,10 +117,8 @@ contract FlightSuretyApp {
                               string name
                             )
                             external
-                            returns(bool success, uint256 votes)
     {
         flightSuretyData.registerAirline(airline, name);
-        return (success, 0);
     }
 
     function fundAirline (
@@ -127,11 +126,9 @@ contract FlightSuretyApp {
                           )
                           public
                           payable
-                          returns (uint256)
    {
-     uint256 airlineBalance = flightSuretyData.fundAirline.value(msg.value)(airline);
-
-     return airlineBalance;
+     var (airlineName, airlineBalance) = flightSuretyData.fundAirline.value(msg.value)(airline);
+     emit airlineFunded(airlineName, airlineBalance);
    }
 
    function voteToRegisterAirline
@@ -141,6 +138,13 @@ contract FlightSuretyApp {
                            public
   {
      flightSuretyData.voteToRegisterAirline(airline);
+  }
+
+  function getAirline(address airline)
+                      public view
+                      returns (bool,bool,string,address,uint256)
+  {
+    return flightSuretyData.getAirline(airline);
   }
 
 
@@ -402,8 +406,9 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
   function setOperatingStatus (bool mode) external;
   function registerAirline (address airline, string name) external;
-  function fundAirline (address airline) external payable returns (uint256);
+  function fundAirline (address airline) external payable returns (string, uint256);
   function voteToRegisterAirline (address airline) external;
   function registerFlight (string flightNumber, uint256 timestamp) external;
+  function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
 
 }

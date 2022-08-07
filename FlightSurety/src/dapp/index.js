@@ -18,12 +18,25 @@ import './flightsurety.css';
 
 
         // Add flight
+        //DOM.elid('get-airlines').addEventListener('click', () => {
+            let activeAirlines = contract.getAirlines();
+
+            populateAirlinesDD(activeAirlines);
+        //});
+
+        // Add flight
         DOM.elid('register-flight').addEventListener('click', () => {
             let flight = DOM.elid('new-flight-number').value;
+            let airline = DOM.elid('airlines-list').value;
             // Write transaction
-            contract.registerFlight(flight, (error, result) => {
-                display('Fligh registration', '', [ { label: 'New Flight Generated:', error: error, value: result} ]);
+            contract.registerFlight(airline, flight, (error, result) => {
+                display('Fligh registration', '', [ { label: 'New Flight Generated:', error: error, value: result.flight} ]);
                 console.log(error, result);
+                if(error == null){
+                  let airlineName = activeAirlines.find(x => x.account === result.airline).name;
+                  displayFlight(airlineName, result.flight, result.timestamp);
+                }
+
             });
         });
 
@@ -39,8 +52,58 @@ import './flightsurety.css';
     });
 
 
+    // async function getAirlines(contract) {
+    //   const airlines = await contract.getAirlines();
+    //   console.log(airlines);
+    //
+    //   airlines.forEach((airline) => {
+    //     console.log(airline);
+    //     //display('Airlines', '', [{ label: 'Airline -->', value: airline.}])
+    //
+    //   });
+    //
+    //
+    //   return airlines;
+    // }
+
+
 })();
 
+
+function populateAirlinesDD(activeAirlines) {
+  let airlinesDD = DOM.elid('airlines-list');
+  let airlineOpt;
+  //let airlines = contract.getAirlines();
+  console.log(`airlines ${activeAirlines}`);
+  activeAirlines.forEach((airline, i) => {
+      airlineOpt = document.createElement('option');
+      airlineOpt.text = airline.name;
+      airlineOpt.value = airline.account;
+      airlinesDD.add(airlineOpt);
+    }
+  );
+}
+
+function displayFlight(_airline, flight, timestamp){
+  let flightsTable = DOM.elid("flights-board");
+  let flightRow = document.createElement("tr");
+  let flightnumber = document.createElement("td");
+  let airline = document.createElement("td");
+  let departure = document.createElement("td");
+
+  airline.appendChild(document.createTextNode(_airline));
+  flightRow.appendChild(airline);
+
+  flightnumber.appendChild(document.createTextNode(flight));
+  flightRow.appendChild(flightnumber);
+
+  let formattedDep = new Date(parseInt(timestamp)).toString().substring(0,28)
+  departure.appendChild(document.createTextNode(formattedDep));
+  flightRow.appendChild(departure);
+
+  flightsTable.appendChild(flightRow);
+
+}
 
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");

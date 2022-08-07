@@ -10,18 +10,18 @@ module.exports = {
       port: 7545,
       network_id: "*" // Match any network id
     },
-    rinkeby: {
-      provider: function () {
-        var wallet = new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${infuraKey}`)
-        var nonceTracker = new NonceTrackerSubprovider()
-        wallet.engine._providers.unshift(nonceTracker)
-        nonceTracker.setEngine(wallet.engine)
-        return wallet
-      },
-      network_id: 4,
-      // gas: 2000000,   // <--- Twice as much
-      // gasPrice: 10000000000,
-    }
+    // rinkeby: {
+    //   provider: function () {
+    //     var wallet = new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${infuraKey}`)
+    //     var nonceTracker = new NonceTrackerSubprovider()
+    //     wallet.engine._providers.unshift(nonceTracker)
+    //     nonceTracker.setEngine(wallet.engine)
+    //     return wallet
+    //   },
+    //   network_id: 4,
+    //   // gas: 2000000,   // <--- Twice as much
+    //   // gasPrice: 10000000000,
+    // }
   },
   compilers: {
     solc: {

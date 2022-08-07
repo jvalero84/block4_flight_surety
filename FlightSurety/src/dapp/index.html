@@ -24,16 +24,42 @@
       <div id="display-wrapper" class="top-20">
       </div>
 
+      <!-- <div class="display-wrapper">
+          <div class="top-20">
+              <h2>Airlines</h2>
+          </div>
+          <div class="row top-20">
+              <btn class="btn btn-primary" id="get-airlines">Get airlines</btn>
+
+
+          </div>
+      </div> -->
+
       <div class="display-wrapper">
           <div class="top-20">
               <h2>Fligh registration</h2>
           </div>
           <div class="row top-20">
+              <label class="form" for="airlines-list">Airline</label><select id="airlines-list"> </select>&nbsp;&nbsp;&nbsp;
               <label class="form" for="new-flight-number">Flight Number</label>
               <input type="text" id="new-flight-number"> <btn class="btn btn-primary" id="register-flight">Register Flight</btn>
 
           </div>
       </div>
+      <div class="row top-20"></div>
+
+      <table class="table table-sm table-dark" id="flights-board">
+        <thead>
+          <tr>
+            <th scope="col">Airline</th>
+            <th scope="col">Flight Number</th>
+            <th scope="col">Departure</th>
+          </tr>
+        </thead>
+
+
+      </table>
+
 
 
 
