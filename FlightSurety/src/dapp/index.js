@@ -20,8 +20,9 @@ import './flightsurety.css';
         // Add flight
         //DOM.elid('get-airlines').addEventListener('click', () => {
             let activeAirlines = contract.getAirlines();
-
             populateAirlinesDD(activeAirlines);
+            let passengers = contract.getPassengers();
+            populatePassengersDD(passengers);
         //});
 
         // Add flight
@@ -30,11 +31,13 @@ import './flightsurety.css';
             let airline = DOM.elid('airlines-list').value;
             // Write transaction
             contract.registerFlight(airline, flight, (error, result) => {
+              console.log('registerFlightresult!!', error, result);
                 display('Fligh registration', '', [ { label: 'New Flight Generated:', error: error, value: result.flight} ]);
                 console.log(error, result);
                 if(error == null){
                   let airlineName = activeAirlines.find(x => x.account === result.airline).name;
                   displayFlight(airlineName, result.flight, result.timestamp);
+                  populateFlightsDD(contract);
                 }
 
             });
@@ -70,6 +73,18 @@ import './flightsurety.css';
 })();
 
 
+function populatePassengersDD(passengers) {
+  let passengersDD = DOM.elid('passenger-list');
+  let passengerOpt;
+  passengers.forEach((passenger, i) => {
+      passengerOpt = document.createElement('option');
+      passengerOpt.text = passenger;
+      passengerOpt.value = passenger;
+      passengersDD.add(passengerOpt);
+    }
+  );
+}
+
 function populateAirlinesDD(activeAirlines) {
   let airlinesDD = DOM.elid('airlines-list');
   let airlineOpt;
@@ -80,6 +95,20 @@ function populateAirlinesDD(activeAirlines) {
       airlineOpt.text = airline.name;
       airlineOpt.value = airline.account;
       airlinesDD.add(airlineOpt);
+    }
+  );
+}
+
+ async function populateFlightsDD(contract) {
+  let flightsDD = DOM.elid('flight-list');
+  let flightOpt;
+  let flightsList = await contract.getRegisteredFlights();
+  console.log(`flights ${flightsList}`);
+  flightsList.forEach((flight, i) => {
+      flightOpt = document.createElement('option');
+      flightOpt.text = flight;
+      flightOpt.value = flight;
+      flightsDD.add(flightOpt);
     }
   );
 }

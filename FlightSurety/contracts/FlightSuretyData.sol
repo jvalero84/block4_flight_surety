@@ -37,7 +37,7 @@ contract FlightSuretyData {
 
     struct Flight {
         bool isRegistered;
-        string flightNumber;
+        bytes32 flightNumber;
         uint8 statusCode;
         uint256 updatedTimestamp;
         address airline;
@@ -287,7 +287,7 @@ contract FlightSuretyData {
 
    function registerFlight
                                (
-                                 string flightNumber,
+                                 bytes32 flightNumber,
                                  uint256 timestamp
                                )
                                external
@@ -357,7 +357,7 @@ contract FlightSuretyData {
     function getFlightKey
                         (
                             address airline,
-                            string memory flight,
+                            bytes32 flight,
                             uint256 timestamp
                         )
                         pure

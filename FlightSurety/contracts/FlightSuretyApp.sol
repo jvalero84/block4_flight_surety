@@ -29,6 +29,7 @@ contract FlightSuretyApp {
         address airline;
     }
     mapping(bytes32 => Flight) private flights;
+    bytes32[] private flightNames;
 
     //uint8[] private flightStatusCodes = [STATUS_CODE_UNKNOWN, STATUS_CODE_ON_TIME, STATUS_CODE_LATE_AIRLINE, STATUS_CODE_LATE_WEATHER, STATUS_CODE_LATE_TECHNICAL, STATUS_CODE_LATE_OTHER];
 
@@ -154,14 +155,24 @@ contract FlightSuretyApp {
     */
     function registerFlight
                                 (
-                                  string flight,
+                                  bytes32 flight,
                                   uint256 timestamp
                                 )
                                 requireIsOperational()
                                 public
     {
+      flightNames.push(flight);
       flightSuretyData.registerFlight(flight, timestamp);
     }
+
+    function getFlights()
+                        requireIsOperational()
+                        public view
+                        returns (bytes32[])
+    {
+        return flightNames;
+    }
+
 
    /**
     * @dev Called after oracle has updated flight status
@@ -408,7 +419,7 @@ contract FlightSuretyData {
   function registerAirline (address airline, string name) external;
   function fundAirline (address airline) external payable returns (string, uint256);
   function voteToRegisterAirline (address airline) external;
-  function registerFlight (string flightNumber, uint256 timestamp) external;
+  function registerFlight (bytes32 flightNumber, uint256 timestamp) external;
   function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
 
 }

@@ -20,10 +20,9 @@
     </nav>
 
     <main class="container">
-
       <div id="display-wrapper" class="top-20">
       </div>
-
+    </main>
       <!-- <div class="display-wrapper">
           <div class="top-20">
               <h2>Airlines</h2>
@@ -34,35 +33,48 @@
 
           </div>
       </div> -->
+      <main class="section">
+          <div class="display-wrapper">
+              <div class="top-20">
+                  <h2>Fligh registration</h2>
+              </div>
+              <div class="row top-20">
+                  <label class="form" for="airlines-list">Airline</label><select id="airlines-list"> </select>
+                  <label class="form" for="new-flight-number">Flight Number</label>
+                  <input type="text" id="new-flight-number"> <btn class="btn btn-primary" id="register-flight">Register Flight</btn>
 
+              </div>
+          </div>
+          <div class="row top-20"></div>
+
+          <table class="table table-sm table-dark" id="flights-board">
+            <thead>
+              <tr>
+                <th scope="col">Airline</th>
+                <th scope="col">Flight Number</th>
+                <th scope="col">Departure</th>
+              </tr>
+            </thead>
+
+
+          </table>
+    </main>
+
+    <main class="section">
       <div class="display-wrapper">
           <div class="top-20">
-              <h2>Fligh registration</h2>
+              <h2>What if something goes wrong..? Better safe than sorry!</h2>
           </div>
           <div class="row top-20">
-              <label class="form" for="airlines-list">Airline</label><select id="airlines-list"> </select>&nbsp;&nbsp;&nbsp;
-              <label class="form" for="new-flight-number">Flight Number</label>
-              <input type="text" id="new-flight-number"> <btn class="btn btn-primary" id="register-flight">Register Flight</btn>
-
+              <label class="form" for="passenger-list">Passenger</label><select id="passenger-list"> </select>
+              <label class="form" for="flight-list">Flight</label><select id="flight-list"> </select>
+              <label class="form">Insurance Amount(ETH)</label> <input id='insurance-amount' type="number" value = "0.5" min="0.01" max="1" step="0.01"/>
+                <btn class="btn btn-primary" id="buy-insurance">Purchase Insurance</btn>
           </div>
       </div>
-      <div class="row top-20"></div>
+    </main>
 
-      <table class="table table-sm table-dark" id="flights-board">
-        <thead>
-          <tr>
-            <th scope="col">Airline</th>
-            <th scope="col">Flight Number</th>
-            <th scope="col">Departure</th>
-          </tr>
-        </thead>
-
-
-      </table>
-
-
-
-
+    <main class="section">
         <div class="row top-20">
             <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
         </div>

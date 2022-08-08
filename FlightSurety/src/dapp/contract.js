@@ -246,6 +246,11 @@ async fundAirline(airline, callback) {
       return self.airlines;
     }
 
+    getPassengers() {
+      let self = this;
+      return self.passengers;
+    }
+
   //   async getAirlines(callback) {
   //     let self = this;
   //     const airlinesData = [];
@@ -270,7 +275,7 @@ async fundAirline(airline, callback) {
 
 
     // Function for registering a new flight
-    registerFlight(airline, flightNumber, callback) {
+  async registerFlight(airline, flightNumber, callback) {
         let self = this;
         let timestamp = Math.floor(Date.now() / 1000);
         let flightInfo = {
@@ -278,9 +283,9 @@ async fundAirline(airline, callback) {
             flight: flightNumber,
             timestamp: timestamp
         }
-        console.log(`from airline ${airline}`);
+        console.log(`from airline ${airline} with flightNumber ${flightNumber}`);
         self.flightSuretyApp.methods
-            .registerFlight(flightNumber, timestamp)
+            .registerFlight(self.web3.utils.asciiToHex(flightNumber), timestamp)
             .send({
                 from: airline,
                 gas: 2000000,
@@ -288,6 +293,17 @@ async fundAirline(airline, callback) {
             }, (error, result) => {
                 callback(error, flightInfo);
             });
+
+    }
+
+    async getRegisteredFlights() {
+      let self = this;
+      const flightList = await self.flightSuretyApp.methods
+                                 .getFlights().call({ from: self.owner});
+      flightList.forEach(function(part, index) {
+          this[index] = self.web3.utils.hexToAscii(this[index]);
+        }, flightList);
+      return flightList;
     }
 
     fetchFlightStatus(flight, callback) {
