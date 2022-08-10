@@ -34,6 +34,7 @@ contract FlightSuretyApp {
     //uint8[] private flightStatusCodes = [STATUS_CODE_UNKNOWN, STATUS_CODE_ON_TIME, STATUS_CODE_LATE_AIRLINE, STATUS_CODE_LATE_WEATHER, STATUS_CODE_LATE_TECHNICAL, STATUS_CODE_LATE_OTHER];
 
     event airlineFunded(string airline, uint256 balance);
+    event insurancePurchased(bytes32 flight, string airline, address passenger, uint256 amount);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -173,6 +174,16 @@ contract FlightSuretyApp {
         return flightNames;
     }
 
+    function buyInsurance (
+                              bytes32 flight
+                          )
+                          requireIsOperational()
+                          public
+                          payable
+    {
+        var airlineName = flightSuretyData.buyInsurance(flight);
+        emit insurancePurchased(flight, airlineName, tx.origin, msg.value);
+    }
 
    /**
     * @dev Called after oracle has updated flight status
@@ -421,5 +432,6 @@ contract FlightSuretyData {
   function voteToRegisterAirline (address airline) external;
   function registerFlight (bytes32 flightNumber, uint256 timestamp) external;
   function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
+  function buyInsurance(bytes32 flight) external payable returns (string);
 
 }

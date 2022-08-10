@@ -25,6 +25,7 @@ contract FlightSuretyData {
 
     uint256 private constant AIRLINE_FUNDING_FEE = 1; //TODO: change to 10 eth
     uint256 private constant AIRLINE_REGISTRATION_CONSENSUS_PERCENT = 50;
+    uint256 private constant FLIGHT_MAX_INSURANCE_FEE = 1;
     uint8 private constant MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS = 4;
 
     struct Airline {
@@ -35,12 +36,20 @@ contract FlightSuretyData {
       uint256 balance;
     }
 
+    struct Passenger {
+      address account;
+      uint256 insuranceAmount;
+      //bool isCredited;
+    }
+
     struct Flight {
         bool isRegistered;
         bytes32 flightNumber;
         uint8 statusCode;
         uint256 updatedTimestamp;
         address airline;
+        //address[] insureeAddresses;
+        mapping(address => Passenger) insurees;
     }
 
     mapping(bytes32 => Flight) private flights;
@@ -142,7 +151,7 @@ contract FlightSuretyData {
 
     modifier requireIsActiveAirline(address airline)
     {
-      require(isAirline(airline) == true, "Only active airlines can perform this operation.");
+      require(isAirline(airline) == true, "The airline is not active.");
       _;
     }
 
@@ -308,12 +317,30 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */
-    function buy
+    function buyInsurance
                             (
+                              bytes32 flight
                             )
                             external
                             payable
+                            requireIsOperational
+                            requireIsActiveAirline(airline)
+                            returns (string)
     {
+        require(msg.value <= FLIGHT_MAX_INSURANCE_FEE, "Insurance can't be purchased for more than 1 ether");
+
+        bytes32 flightKey = getFlightKey(airline, flight, 0);
+
+        address airline = flights[flightKey].airline;
+
+        Passenger memory buyer = Passenger({
+                    account: tx.origin,
+                    insuranceAmount: msg.value
+                });
+
+        flights[flightKey].insurees[tx.origin] = buyer;
+        airlines[airline].balance = airlines[airline].balance.add(msg.value);
+        return airlines[airline].name;
 
     }
 

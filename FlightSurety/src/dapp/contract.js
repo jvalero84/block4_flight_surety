@@ -190,6 +190,23 @@ async fundAirline(airline, callback) {
 
 }
 
+async purchaseInsurance(passenger, flight, amount, callback) {
+
+  let self = this;
+  let insuranceFeeInWei = self.web3.utils.toWei(amount, "ether")
+
+  await self.flightSuretyApp.methods
+        .buyInsurance(self.web3.utils.asciiToHex(flight))
+        .send({
+          from: passenger,
+          value: insuranceFeeInWei,
+          gasPrice: 100000000000
+        }, (error, result) => {
+            console.log(error);
+        });
+
+}
+
   //   getMetaskAccountID() {
   //   // Retrieving metamask accounts
   //   this.web3.eth.getAccounts(function (err, res) {

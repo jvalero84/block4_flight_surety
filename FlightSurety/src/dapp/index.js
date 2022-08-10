@@ -43,6 +43,19 @@ import './flightsurety.css';
             });
         });
 
+        // Purchase Insurance
+        DOM.elid('buy-insurance').addEventListener('click', () => {
+          let passenger = DOM.elid('passenger-list').value;
+          let flight = DOM.elid('flight-list').value;
+          let insuranceAmount = DOM.elid('insurance-amount').value;
+
+          contract.purchaseInsurance(passenger, flight, insuranceAmount, (error, result) => {
+            console.log('Buy insurance', error, result);
+
+          });
+
+        });
+
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number').value;
