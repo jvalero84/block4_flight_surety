@@ -39,7 +39,8 @@ contract FlightSuretyData {
     struct Passenger {
       address account;
       uint256 insuranceAmount;
-      //bool isCredited;
+      uint256 payoutAmount;
+      bool isCredited;
     }
 
     struct Flight {
@@ -319,28 +320,28 @@ contract FlightSuretyData {
     */
     function buyInsurance
                             (
-                              bytes32 flight
+                              bytes32 flight,
+                              address airline
                             )
                             external
                             payable
                             requireIsOperational
-                            requireIsActiveAirline(airline)
-                            returns (string)
+                            returns (string, bytes32)
     {
         require(msg.value <= FLIGHT_MAX_INSURANCE_FEE, "Insurance can't be purchased for more than 1 ether");
 
         bytes32 flightKey = getFlightKey(airline, flight, 0);
 
-        address airline = flights[flightKey].airline;
-
         Passenger memory buyer = Passenger({
                     account: tx.origin,
-                    insuranceAmount: msg.value
+                    insuranceAmount: msg.value,
+                    payoutAmount: 0,
+                    isCredited: false
                 });
 
         flights[flightKey].insurees[tx.origin] = buyer;
         airlines[airline].balance = airlines[airline].balance.add(msg.value);
-        return airlines[airline].name;
+        return (airlines[airline].name, flight);
 
     }
 
@@ -349,10 +350,15 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
+                                  bytes32 flightNumber,
+                                  address airline
                                 )
                                 external
-                                pure
+                                requireIsOperational
     {
+      bytes32 flightKey = getFlightKey(airline, flightNumber, 0);
+      Flight storage flight = flights[flightKey];
+
     }
 
 

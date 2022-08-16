@@ -175,14 +175,15 @@ contract FlightSuretyApp {
     }
 
     function buyInsurance (
-                              bytes32 flight
+                              bytes32 flight,
+                              address airline
                           )
                           requireIsOperational()
                           public
                           payable
     {
-        var airlineName = flightSuretyData.buyInsurance(flight);
-        emit insurancePurchased(flight, airlineName, tx.origin, msg.value);
+        var (airlineName, flightNumber) = flightSuretyData.buyInsurance(flight, airline);
+        emit insurancePurchased(flightNumber, airlineName, tx.origin, msg.value);
     }
 
    /**
@@ -432,6 +433,6 @@ contract FlightSuretyData {
   function voteToRegisterAirline (address airline) external;
   function registerFlight (bytes32 flightNumber, uint256 timestamp) external;
   function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
-  function buyInsurance(bytes32 flight) external payable returns (string);
+  function buyInsurance(bytes32 flight, address airline) external payable returns (string, bytes32);
 
 }

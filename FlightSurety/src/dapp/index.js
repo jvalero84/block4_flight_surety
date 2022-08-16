@@ -23,6 +23,7 @@ import './flightsurety.css';
             populateAirlinesDD(activeAirlines);
             let passengers = contract.getPassengers();
             populatePassengersDD(passengers);
+            populateFlightsDD(contract);
         //});
 
         // Add flight
@@ -35,6 +36,7 @@ import './flightsurety.css';
                 display('Fligh registration', '', [ { label: 'New Flight Generated:', error: error, value: result.flight} ]);
                 console.log(error, result);
                 if(error == null){
+                  contract.addFlight(flight, airline);
                   let airlineName = activeAirlines.find(x => x.account === result.airline).name;
                   displayFlight(airlineName, result.flight, result.timestamp);
                   populateFlightsDD(contract);
@@ -53,6 +55,17 @@ import './flightsurety.css';
             console.log('Buy insurance', error, result);
 
           });
+
+          contract.getInsureeInfoByFlight((error, result) => {
+            if(error != null){
+              console.log(error);
+            } else {
+              displayInsurancePurchases(result.passenger, result.airline, result.flight, result.amount);
+              console.log(JSON.stringify(result));
+            }
+          });
+
+
 
         });
 
@@ -145,6 +158,29 @@ function displayFlight(_airline, flight, timestamp){
 
   flightsTable.appendChild(flightRow);
 
+}
+
+function displayInsurancePurchases(_passenger, _airline, _flight, _amount){
+  let insurancesTable = DOM.elid("insurances-purchased-board");
+  let insuranceRow = document.createElement("tr");
+  let passenger = document.createElement("td");
+  let flightnumber = document.createElement("td");
+  let airline = document.createElement("td");
+  let amount = document.createElement("td");
+
+  passenger.appendChild(document.createTextNode(_passenger));
+  insuranceRow.appendChild(passenger);
+
+  airline.appendChild(document.createTextNode(_airline));
+  insuranceRow.appendChild(airline);
+
+  flightnumber.appendChild(document.createTextNode(_flight));
+  insuranceRow.appendChild(flightnumber);
+
+  amount.appendChild(document.createTextNode(_amount));
+  insuranceRow.appendChild(amount);
+
+  insurancesTable.appendChild(insuranceRow);
 }
 
 function display(title, description, results) {

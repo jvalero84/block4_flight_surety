@@ -15,6 +15,7 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
+        this.flights = [];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
         //this.initializeWeb3();
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
@@ -190,13 +191,16 @@ async fundAirline(airline, callback) {
 
 }
 
-async purchaseInsurance(passenger, flight, amount, callback) {
-
+async purchaseInsurance(passenger, flightNumber, amount, callback) {
   let self = this;
-  let insuranceFeeInWei = self.web3.utils.toWei(amount, "ether")
+  var fNumber = flightNumber;
+  console.log(`purchaseInsurance flight: ${flightNumber}`);
+  console.log(`self.flights: ${JSON.stringify(self.flights)}`);
+  let insuranceFeeInWei = self.web3.utils.toWei(amount, "ether");
+  let flightInfo = self.flights.find(obj => obj.flight === fNumber);
 
   await self.flightSuretyApp.methods
-        .buyInsurance(self.web3.utils.asciiToHex(flight))
+        .buyInsurance(self.web3.utils.asciiToHex(flightNumber), flightInfo.airline)
         .send({
           from: passenger,
           value: insuranceFeeInWei,
@@ -204,6 +208,33 @@ async purchaseInsurance(passenger, flight, amount, callback) {
         }, (error, result) => {
             console.log(error);
         });
+
+}
+
+async getInsureeInfoByFlight(callback) {
+
+  let self = this;
+  let payload = {
+      airline: '',
+      flight: '',
+      passenger: '',
+      amount: 0
+  }
+
+  self.flightSuretyApp.getPastEvents('insurancePurchased',{
+      fromBlock: "latest"
+  }, function (error, events) {
+      if (error) {
+          console.log(error)
+      }
+      console.log(events[0]);
+      //Lets override with the actual data..
+      payload.airline = events[0].returnValues.airline;
+      payload.flight = self.web3.utils.hexToUtf8(events[0].returnValues.flight);
+      payload.passenger = events[0].returnValues.passenger;
+      payload.amount = self.web3.utils.fromWei(events[0].returnValues.amount, 'ether');
+      callback(error, payload);
+  });
 
 }
 
@@ -268,6 +299,20 @@ async purchaseInsurance(passenger, flight, amount, callback) {
       return self.passengers;
     }
 
+    addFlight(flight, airline){
+      let self = this;
+      self.flights.push({flight: flight, airline: airline});
+    }
+
+    getFlight(flightNumber) {
+      let self = this;
+      console.log(`getFlight param: ${flightNumber}`);
+      console.log(`getFlight flights: ${self.flights}`);
+      let flight = self.flights.find(x => x.flight === flightNumber);
+      console.log(`getFlight ${flight}`);
+      return flight;
+    }
+
   //   async getAirlines(callback) {
   //     let self = this;
   //     const airlinesData = [];
@@ -294,20 +339,26 @@ async purchaseInsurance(passenger, flight, amount, callback) {
     // Function for registering a new flight
   async registerFlight(airline, flightNumber, callback) {
         let self = this;
-        let timestamp = Math.floor(Date.now() / 1000);
+        //let timestamp = Math.floor(Date.now() / 1000);
+        let timestamp = 0;
         let flightInfo = {
             airline: airline,
             flight: flightNumber,
             timestamp: timestamp
         }
-        console.log(`from airline ${airline} with flightNumber ${flightNumber}`);
-        self.flightSuretyApp.methods
-            .registerFlight(self.web3.utils.asciiToHex(flightNumber), timestamp)
+        console.log(`registerFlight self.flights: ${JSON.stringify(self.flights)}`);
+        //console.log(`from airline ${airline} with flightNumber ${flightNumber}`);
+        await self.flightSuretyApp.methods
+            .registerFlight(self.web3.utils.utf8ToHex(flightNumber), timestamp)
             .send({
                 from: airline,
                 gas: 2000000,
                 gasPrice: 100000000000
             }, (error, result) => {
+                if (error === null) {
+                  //self.flights.push({flight: flightNumber, airline: airline});
+                  console.log(self.flights);
+                }
                 callback(error, flightInfo);
             });
 
@@ -318,7 +369,7 @@ async purchaseInsurance(passenger, flight, amount, callback) {
       const flightList = await self.flightSuretyApp.methods
                                  .getFlights().call({ from: self.owner});
       flightList.forEach(function(part, index) {
-          this[index] = self.web3.utils.hexToAscii(this[index]);
+          this[index] = self.web3.utils.hexToUtf8(this[index]);
         }, flightList);
       return flightList;
     }
