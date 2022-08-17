@@ -49,7 +49,7 @@ contract FlightSuretyData {
         uint8 statusCode;
         uint256 updatedTimestamp;
         address airline;
-        //address[] insureeAddresses;
+        address[] insureeAddresses;
         mapping(address => Passenger) insurees;
     }
 
@@ -340,6 +340,7 @@ contract FlightSuretyData {
                 });
 
         flights[flightKey].insurees[tx.origin] = buyer;
+        flights[flightKey].insureeAddresses.push(tx.origin);
         airlines[airline].balance = airlines[airline].balance.add(msg.value);
         return (airlines[airline].name, flight);
 
@@ -350,15 +351,30 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
-                                  bytes32 flightNumber,
-                                  address airline
+                                  string flightNumber,
+                                  address airlineAddress
                                 )
                                 external
                                 requireIsOperational
+                                returns (string, uint256)
     {
-      bytes32 flightKey = getFlightKey(airline, flightNumber, 0);
+      bytes32 flightKey = getFlightKey(airlineAddress, flightNumber, 0);
       Flight storage flight = flights[flightKey];
+      Airline storage airline = airlines[airlineAddress];
+      uint256 accountsTargetedForCredit = flight.insureeAddresses.length;
 
+      for (uint256 i = 0; i < accountsTargetedForCredit; i++) {
+        Passenger storage passenger = flight.insurees[flight.insureeAddresses[i]];
+
+        if(!passenger.isCredited) {
+          uint256 amountToCredit = passenger.insuranceAmount.mul(15).div(10);
+          passenger.isCredited = true;
+          passenger.payoutAmount = amountToCredit;
+          airline.balance = airline.balance.sub(amountToCredit);
+        }
+      }
+
+      return (airlines[airlineAddress].name, accountsTargetedForCredit);
     }
 
 
@@ -391,6 +407,19 @@ contract FlightSuretyData {
                         (
                             address airline,
                             bytes32 flight,
+                            uint256 timestamp
+                        )
+                        pure
+                        internal
+                        returns(bytes32)
+    {
+        return keccak256(abi.encodePacked(airline, flight, timestamp));
+    }
+
+    function getFlightKey
+                        (
+                            address airline,
+                            string memory flight,
                             uint256 timestamp
                         )
                         pure

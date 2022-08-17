@@ -35,6 +35,7 @@ contract FlightSuretyApp {
 
     event airlineFunded(string airline, uint256 balance);
     event insurancePurchased(bytes32 flight, string airline, address passenger, uint256 amount);
+    event flightInsureesCredited(string flight, string airline, uint256 passengersCredited);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -198,8 +199,13 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 )
                                 internal
-                                pure
     {
+      bytes32 key = keccak256(abi.encodePacked(airline, flight, timestamp));
+      oracleResponses[key].isOpen = false;
+      if(statusCode == 20) {
+        var (airlineName, passengersCredited) = flightSuretyData.creditInsurees(flight, airline);
+        emit flightInsureesCredited(flight, airlineName, passengersCredited);
+      }
     }
 
 
@@ -434,5 +440,6 @@ contract FlightSuretyData {
   function registerFlight (bytes32 flightNumber, uint256 timestamp) external;
   function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
   function buyInsurance(bytes32 flight, address airline) external payable returns (string, bytes32);
+  function creditInsurees(string flightNumber, address airlineAddress) external returns (string, uint256);
 
 }
