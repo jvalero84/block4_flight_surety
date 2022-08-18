@@ -36,6 +36,7 @@ contract FlightSuretyApp {
     event airlineFunded(string airline, uint256 balance);
     event insurancePurchased(bytes32 flight, string airline, address passenger, uint256 amount);
     event flightInsureesCredited(string flight, string airline, uint256 passengersCredited);
+    event insureeCreditWithdrawn(address passenger, uint256 withdrawnAmount);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -183,9 +184,28 @@ contract FlightSuretyApp {
                           public
                           payable
     {
-        var (airlineName, flightNumber) = flightSuretyData.buyInsurance(flight, airline);
+        var (airlineName, flightNumber) = flightSuretyData.buyInsurance.value(msg.value)(flight, airline);
         emit insurancePurchased(flightNumber, airlineName, tx.origin, msg.value);
     }
+
+    function withdrawInsureeCredit()
+                                    requireIsOperational()
+                                    payable
+    {
+      uint256 withdrawnAmount = flightSuretyData.pay(tx.origin);
+      emit insureeCreditWithdrawn(tx.origin, withdrawnAmount);
+    }
+
+    function getInsureeFunds(
+                                address passengerAddress
+                            )
+                            requireIsOperational()
+                            returns (uint256)
+    {
+        uint256 insureeFunds = flightSuretyData.getInsureeFunds(passengerAddress);
+        return insureeFunds;
+    }
+
 
    /**
     * @dev Called after oracle has updated flight status
@@ -441,5 +461,7 @@ contract FlightSuretyData {
   function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
   function buyInsurance(bytes32 flight, address airline) external payable returns (string, bytes32);
   function creditInsurees(string flightNumber, address airlineAddress) external returns (string, uint256);
+  function pay(address passenger) external payable returns(uint256);
+  function getInsureeFunds(address insureeAddress) view public returns(uint256);
 
 }

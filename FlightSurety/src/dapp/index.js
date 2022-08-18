@@ -22,8 +22,9 @@ import './flightsurety.css';
             let activeAirlines = contract.getAirlines();
             populateAirlinesDD(activeAirlines);
             let passengers = contract.getPassengers();
-            populatePassengersDD(passengers);
+            populatePassengersDD(passengers, 'passenger-list');
             populateFlightsDD(contract);
+            populatePassengersDD(passengers, 'insurees-list');
         //});
 
         // Add flight
@@ -69,6 +70,14 @@ import './flightsurety.css';
 
         });
 
+
+        DOM.elid('insurees-list').addEventListener('change', () => {
+            let passengerAddress = DOM.elid('insurees-list').value;
+            contract.getInsureeFunds(passengerAddress, (error, result) => {
+                display('Insuree', 'Withdrawn funds', [ { label: 'Passenger funds withdrawn', error: error, value: result} ]);
+            });
+        });
+
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number').value;
@@ -99,8 +108,8 @@ import './flightsurety.css';
 })();
 
 
-function populatePassengersDD(passengers) {
-  let passengersDD = DOM.elid('passenger-list');
+function populatePassengersDD(passengers, dropdownId) {
+  let passengersDD = DOM.elid(dropdownId);
   let passengerOpt;
   passengers.forEach((passenger, i) => {
       passengerOpt = document.createElement('option');

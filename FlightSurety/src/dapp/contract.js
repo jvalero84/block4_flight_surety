@@ -374,6 +374,21 @@ async getInsureeInfoByFlight(callback) {
       return flightList;
     }
 
+    async getInsureeFunds(passenger, callback) {
+      let self = this;
+      const insureeFunds = await self.flightSuretyApp.methods
+                                 .getInsureeFunds(passenger)
+                                 .call({
+                                    from: self.owner
+                                  }, (error, result) => {
+                                      if (error === null) {
+                                        //self.flights.push({flight: flightNumber, airline: airline});
+                                        console.log(result);
+                                      }
+                                      callback(error, result);
+                                  });
+    }
+
     fetchFlightStatus(flight, callback) {
         let self = this;
         let payload = {

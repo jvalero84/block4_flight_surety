@@ -53,6 +53,8 @@ contract FlightSuretyData {
         mapping(address => Passenger) insurees;
     }
 
+    mapping(address => uint256) insureeCredit;
+
     mapping(bytes32 => Flight) private flights;
 
     mapping(address => bool) private authorizedCallers;
@@ -370,6 +372,7 @@ contract FlightSuretyData {
           uint256 amountToCredit = passenger.insuranceAmount.mul(15).div(10);
           passenger.isCredited = true;
           passenger.payoutAmount = amountToCredit;
+          insureeCredit[passenger.account] = insureeCredit[passenger.account].add(amountToCredit);
           airline.balance = airline.balance.sub(amountToCredit);
         }
       }
@@ -384,10 +387,29 @@ contract FlightSuretyData {
     */
     function pay
                             (
+                              address passenger
                             )
                             external
-                            pure
+                            requireIsOperational
+                            payable
+                            returns(uint256)
     {
+      uint256 payoutAmount = insureeCredit[passenger];
+      require(payoutAmount > 0, "Passenger don't have any credit to withdraw.");
+      insureeCredit[passenger] = 0;
+      passenger.transfer(payoutAmount);
+      return payoutAmount;
+    }
+
+    function getInsureeFunds(
+                                address insureeAddress
+                            )
+                            view
+                            public
+                            requireIsOperational
+                            returns(uint256)
+    {
+        return insureeCredit[insureeAddress];
     }
 
    /**
