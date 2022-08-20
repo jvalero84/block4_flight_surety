@@ -25,7 +25,7 @@ contract FlightSuretyData {
 
     uint256 private constant AIRLINE_FUNDING_FEE = 1; //TODO: change to 10 eth
     uint256 private constant AIRLINE_REGISTRATION_CONSENSUS_PERCENT = 50;
-    uint256 private constant FLIGHT_MAX_INSURANCE_FEE = 1;
+    uint256 private constant FLIGHT_MAX_INSURANCE_FEE = 1 ether;
     uint8 private constant MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS = 4;
 
     struct Airline {
@@ -306,7 +306,7 @@ contract FlightSuretyData {
                                requireIsOperational
                                requireIsActiveAirline(tx.origin)
    {
-     bytes32 key = getFlightKey(tx.origin, flightNumber, timestamp);
+     bytes32 key = getFlightKey(tx.origin, flightNumber, 0);
      flights[key].isRegistered = true;
      flights[key].flightNumber = flightNumber;
      flights[key].updatedTimestamp = timestamp;
@@ -334,6 +334,11 @@ contract FlightSuretyData {
 
         bytes32 flightKey = getFlightKey(airline, flight, 0);
 
+        Flight storage currentFlight = flights[flightKey];
+
+
+        //require(currentFlight.airline != address(0), "The flight has default values!!!!");
+
         Passenger memory buyer = Passenger({
                     account: tx.origin,
                     insuranceAmount: msg.value,
@@ -341,8 +346,10 @@ contract FlightSuretyData {
                     isCredited: false
                 });
 
-        flights[flightKey].insurees[tx.origin] = buyer;
-        flights[flightKey].insureeAddresses.push(tx.origin);
+        require(currentFlight.airline == airline, "Ojo que la aerolinea no coincide!!");
+
+        currentFlight.insurees[tx.origin] = buyer;
+        currentFlight.insureeAddresses.push(tx.origin);
         airlines[airline].balance = airlines[airline].balance.add(msg.value);
         return (airlines[airline].name, flight);
 

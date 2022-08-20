@@ -23,8 +23,9 @@ import './flightsurety.css';
             populateAirlinesDD(activeAirlines);
             let passengers = contract.getPassengers();
             populatePassengersDD(passengers, 'passenger-list');
-            populateFlightsDD(contract);
+            populateFlightsDD(contract, 'flight-list');
             populatePassengersDD(passengers, 'insurees-list');
+            populateFlightsDD(contract, 'or-flight-list');
         //});
 
         // Add flight
@@ -40,7 +41,8 @@ import './flightsurety.css';
                   contract.addFlight(flight, airline);
                   let airlineName = activeAirlines.find(x => x.account === result.airline).name;
                   displayFlight(airlineName, result.flight, result.timestamp);
-                  populateFlightsDD(contract);
+                  populateFlightsDD(contract, 'flight-list');
+                  populateFlightsDD(contract, 'or-flight-list');
                 }
 
             });
@@ -52,21 +54,18 @@ import './flightsurety.css';
           let flight = DOM.elid('flight-list').value;
           let insuranceAmount = DOM.elid('insurance-amount').value;
 
-          contract.purchaseInsurance(passenger, flight, insuranceAmount, (error, result) => {
-            console.log('Buy insurance', error, result);
-
-          });
-
-          contract.getInsureeInfoByFlight((error, result) => {
-            if(error != null){
-              console.log(error);
+          contract.getInsureeInfoByFlight((err, res) => {
+            if(err != null){
+              console.log(err);
             } else {
-              displayInsurancePurchases(result.passenger, result.airline, result.flight, result.amount);
-              console.log(JSON.stringify(result));
+              displayInsurancePurchases(res.passenger, res.airline, res.flight, res.amount);
+              console.log(JSON.stringify(res));
             }
           });
 
-
+          contract.purchaseInsurance(passenger, flight, insuranceAmount, (error, result) => {
+            console.log('Buy insurance', error, result);
+          });
 
         });
 
@@ -74,13 +73,34 @@ import './flightsurety.css';
         DOM.elid('insurees-list').addEventListener('change', () => {
             let passengerAddress = DOM.elid('insurees-list').value;
             contract.getInsureeFunds(passengerAddress, (error, result) => {
-                display('Insuree', 'Withdrawn funds', [ { label: 'Passenger funds withdrawn', error: error, value: result} ]);
+
+                if(result > 0) {
+                  DOM.elid('withdraw-funds').disabled = false;
+                } else {
+                  DOM.elid('withdraw-funds').disabled = true;
+                }
             });
         });
+        DOM.elid('withdraw-funds').addEventListener('click', () => {
+            let passengerAddress = DOM.elid('insurees-list').value;
+            contract.withdrawInsureeFunds(passengerAddress, (error, result) => {
+              if(error === null){
+                console.log('withdrawInsureeFunds', error, result);
+              }
+            });
+
+            contract.getWithdrawnFunds((error, result)=> {
+              if(error === null) {
+                display('Insuree', 'Withdrawn funds', [ { label: 'Passenger funds withdrawn', error: error, value: result.passenger + ' - ' + result.withdrawnAmount + ' (ETH) withdrawn!'} ]);
+              }
+            });
+
+        });
+
 
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
+            let flight = DOM.elid('or-flight-list').value;
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' - ' + result.timestamp + ' - ' + result.status} ]);
@@ -134,8 +154,9 @@ function populateAirlinesDD(activeAirlines) {
   );
 }
 
- async function populateFlightsDD(contract) {
-  let flightsDD = DOM.elid('flight-list');
+ async function populateFlightsDD(contract, dropdownId) {
+  let flightsDD = DOM.elid(dropdownId);
+  flightsDD.options.length = 0;
   let flightOpt;
   let flightsList = await contract.getRegisteredFlights();
   console.log(`flights ${flightsList}`);

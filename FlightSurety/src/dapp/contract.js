@@ -16,7 +16,8 @@ export default class Contract {
         this.airlines = [];
         this.passengers = [];
         this.flights = [];
-        this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        //this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
         //this.initializeWeb3();
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.airlineFundingFee = 1;
@@ -204,9 +205,11 @@ async purchaseInsurance(passenger, flightNumber, amount, callback) {
         .send({
           from: passenger,
           value: insuranceFeeInWei,
-          gasPrice: 100000000000
+          gas: self.web3.utils.toWei("5", "mwei")
+          //gasPrice: 100000000000
         }, (error, result) => {
             console.log(error);
+            callback(error, result);
         });
 
 }
@@ -221,18 +224,18 @@ async getInsureeInfoByFlight(callback) {
       amount: 0
   }
 
-  self.flightSuretyApp.getPastEvents('insurancePurchased',{
-      fromBlock: "latest"
-  }, function (error, events) {
+  await self.flightSuretyApp.once('insurancePurchased',{
+    fromBlock: "pending"
+  }, function (error, evento) {
       if (error) {
           console.log(error)
       }
-      console.log(events[0]);
+      console.log(evento);
       //Lets override with the actual data..
-      payload.airline = events[0].returnValues.airline;
-      payload.flight = self.web3.utils.hexToUtf8(events[0].returnValues.flight);
-      payload.passenger = events[0].returnValues.passenger;
-      payload.amount = self.web3.utils.fromWei(events[0].returnValues.amount, 'ether');
+      payload.airline = evento.returnValues.airline;
+      payload.flight = self.web3.utils.hexToUtf8(evento.returnValues.flight);
+      payload.passenger = evento.returnValues.passenger;
+      payload.amount = self.web3.utils.fromWei(evento.returnValues.amount, 'ether');
       callback(error, payload);
   });
 
@@ -389,20 +392,104 @@ async getInsureeInfoByFlight(callback) {
                                   });
     }
 
-    fetchFlightStatus(flight, callback) {
+    async withdrawInsureeFunds(passenger, callback) {
+      let self = this;
+      await self.flightSuretyApp.methods
+            .withdrawInsureeCredit()
+            .send({
+                    from: passenger,
+                    gas: 2000000,
+                    gasPrice: 100000000000
+            }, (error, result) => {
+                callback(error, result);
+            });
+    }
+
+    async getWithdrawnFunds(callback) {
+
+      let self = this;
+      let payload = {
+          passenger: '',
+          withdrawnAmount: 0
+      }
+
+      self.flightSuretyApp.getPastEvents('insureeCreditWithdrawn',{
+          fromBlock: "latest"
+      }, function (error, events) {
+          if (error) {
+              console.log(error)
+          }
+          console.log(events[0]);
+          //Lets override with the actual data..
+          payload.passenger = events[0].returnValues.passenger;
+          payload.withdrawnAmount = self.web3.utils.fromWei(events[0].returnValues.withdrawnAmount, 'ether');
+          callback(error, payload);
+      });
+
+    }
+
+    fetchFlightStatus(fNumber, callback) {
         let self = this;
+
+        let flightInfo = self.flights.find(obj => obj.flight === fNumber);
+
+
         let payload = {
-            airline: self.airlines[0],
-            flight: flight,
+            airline: flightInfo.airline,
+            flight: fNumber,
             timestamp: Math.floor(Date.now() / 1000),
             status: ''
         }
+
+        self.flightSuretyApp.once('FlightStatusInfo',{
+          fromBlock: "pending"
+        }, function (error, evento) {
+            if (error) {
+                console.log(error)
+            }
+            console.log(evento);
+            //Lets override with the actual data..
+            payload.airline = evento.returnValues.airline;
+            payload.flight = evento.returnValues.flight;
+            payload.timestamp = evento.returnValues.timestamp;
+
+            let flightStatus;
+            switch(evento.returnValues.status){
+              case '0':
+                  flightStatus = 'Unknown';
+                  break;
+              case '10':
+                  flightStatus = 'On Time';
+                  break;
+              case '20':
+                  flightStatus = 'Delayed airline';
+                  break;
+              case '30':
+                  flightStatus = 'Delayed weather';
+                  break;
+              case '40':
+                  flightStatus = 'Delayed technical';
+                  break;
+              case '50':
+                  flightStatus = 'Delayed unknown reason';
+                  break;
+              default:
+                  flightStatus = "Unknown";
+            }
+
+            payload.status = flightStatus;
+
+            callback(error, payload);
+        });
+
+
+
         self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
+            .fetchFlightStatus(payload.airline, payload.flight, 0)
             .send({ from: self.owner});
 
 
-            self.flightSuretyApp.getPastEvents('FlightStatusInfo',{
+            /*self.flightSuretyApp.getPastEvents('FlightStatusInfo',{
                 fromBlock: "latest"
             }, function (error, events) {
                 if (error) {
@@ -415,7 +502,7 @@ async getInsureeInfoByFlight(callback) {
                 payload.timestamp = events[0].returnValues.timestamp;
                 payload.status = events[0].returnValues.status;
                 callback(error, payload);
-            });
+            });*/
 
         //let eventReturnValues = self.flightSuretyApp.events.FlightStatusInfo().returnValues;
         //console.log(`eventReturnValues ${eventReturnValues}`);
