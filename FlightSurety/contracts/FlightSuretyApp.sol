@@ -34,7 +34,7 @@ contract FlightSuretyApp {
     //uint8[] private flightStatusCodes = [STATUS_CODE_UNKNOWN, STATUS_CODE_ON_TIME, STATUS_CODE_LATE_AIRLINE, STATUS_CODE_LATE_WEATHER, STATUS_CODE_LATE_TECHNICAL, STATUS_CODE_LATE_OTHER];
 
     event airlineFunded(string airline, uint256 balance);
-    event insurancePurchased(bytes32 flight, string airline, address passenger, uint256 amount);
+    event insurancePurchased(bytes32 flight, string airline, uint256 airlineBalance, address passenger, uint256 amount);
     event flightInsureesCredited(string flight, string airline, uint256 passengersCredited);
     event insureeCreditWithdrawn(address passenger, uint256 withdrawnAmount);
 
@@ -184,8 +184,8 @@ contract FlightSuretyApp {
                           public
                           payable
     {
-        var (airlineName, flightNumber) = flightSuretyData.buyInsurance.value(msg.value)(flight, airline);
-        emit insurancePurchased(flightNumber, airlineName, tx.origin, msg.value);
+        var (airlineName, flightNumber, airlineBalance) = flightSuretyData.buyInsurance.value(msg.value)(flight, airline);
+        emit insurancePurchased(flightNumber, airlineName, airlineBalance, tx.origin, msg.value);
     }
 
     function withdrawInsureeCredit()
@@ -459,7 +459,7 @@ contract FlightSuretyData {
   function voteToRegisterAirline (address airline) external;
   function registerFlight (bytes32 flightNumber, uint256 timestamp) external;
   function getAirline(address airline) public view returns (bool,bool,string,address,uint256);
-  function buyInsurance(bytes32 flight, address airline) external payable returns (string, bytes32);
+  function buyInsurance(bytes32 flight, address airline) external payable returns (string, bytes32, uint256);
   function creditInsurees(string flightNumber, address airlineAddress) external returns (string, uint256);
   function pay(address passenger) external payable returns(uint256);
   function getInsureeFunds(address insureeAddress) view public returns(uint256);

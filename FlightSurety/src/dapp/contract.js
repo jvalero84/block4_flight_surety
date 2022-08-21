@@ -199,7 +199,7 @@ async purchaseInsurance(passenger, flightNumber, amount, callback) {
   console.log(`self.flights: ${JSON.stringify(self.flights)}`);
   let insuranceFeeInWei = self.web3.utils.toWei(amount, "ether");
   let flightInfo = self.flights.find(obj => obj.flight === fNumber);
-
+  console.log(`purchaseInsurance insFeeInwei: ${insuranceFeeInWei}`);
   await self.flightSuretyApp.methods
         .buyInsurance(self.web3.utils.asciiToHex(flightNumber), flightInfo.airline)
         .send({
@@ -230,7 +230,7 @@ async getInsureeInfoByFlight(callback) {
       if (error) {
           console.log(error)
       }
-      console.log(evento);
+      console.log('insurancePurchased!!',evento);
       //Lets override with the actual data..
       payload.airline = evento.returnValues.airline;
       payload.flight = self.web3.utils.hexToUtf8(evento.returnValues.flight);
@@ -428,13 +428,14 @@ async getInsureeInfoByFlight(callback) {
 
     }
 
-    fetchFlightStatus(fNumber, callback) {
+    async fetchFlightStatus(fNumber, callback) {
         let self = this;
 
         let flightInfo = self.flights.find(obj => obj.flight === fNumber);
 
 
         let payload = {
+            eventId: 'FlightStatusInfo',
             airline: flightInfo.airline,
             flight: fNumber,
             timestamp: Math.floor(Date.now() / 1000),
@@ -482,11 +483,33 @@ async getInsureeInfoByFlight(callback) {
             callback(error, payload);
         });
 
+        let res = {
+            eventId: 'flightInsureesCredited',
+            airline: flightInfo.airline,
+            flight: fNumber,
+            insureesCredited: 0
+        }
 
+        self.flightSuretyApp.once('flightInsureesCredited',{
+          fromBlock: "pending"
+        }, function (error, evento) {
+            if (error) {
+                console.log(error)
+            }
+            console.log(evento);
+            res.insureesCredited = evento.returnValues.passengersCredited;
 
-        self.flightSuretyApp.methods
+            callback(error, res);
+
+            }
+        );
+
+        await self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, 0)
-            .send({ from: self.owner});
+            .send({
+                    from: self.owner,
+                    gas: self.web3.utils.toWei("5", "mwei")
+                  });
 
 
             /*self.flightSuretyApp.getPastEvents('FlightStatusInfo',{

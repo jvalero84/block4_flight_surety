@@ -52,7 +52,7 @@ flightSuretyApp.events.OracleRequest({
     fromBlock: 0
   }, function (error, event) {
     if (error) console.log(error)
-    console.log(`event OracleRequest ${event.returnValues.index} - ${event.returnValues.airline} - ${event.returnValues.flight}`);
+    console.log(`event OracleRequest ${event.returnValues.index} - ${event.returnValues.airline} - ${event.returnValues.flight} - ${event.returnValues.timestamp}`);
     submitOracleResponse(event.returnValues);
     //console.log(event)
 });
@@ -92,7 +92,8 @@ async function submitOracleResponse(requestedFlightData) {
                                                             requestedFlightData.timestamp,
                                                             flightStatusCodes[randomIndex]
                                                           ).send({
-                                                                  from:account
+                                                                  from:account,
+                                                                  gas: web3.utils.toWei("9", "mwei")
                                                                   }
                                                           );
         consensusReached = await flightSuretyApp.methods.hasConsensusBeenReached(

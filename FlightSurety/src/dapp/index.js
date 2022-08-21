@@ -86,6 +86,7 @@ import './flightsurety.css';
             contract.withdrawInsureeFunds(passengerAddress, (error, result) => {
               if(error === null){
                 console.log('withdrawInsureeFunds', error, result);
+                DOM.elid('withdraw-funds').disabled = true;
               }
             });
 
@@ -103,26 +104,16 @@ import './flightsurety.css';
             let flight = DOM.elid('or-flight-list').value;
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' - ' + result.timestamp + ' - ' + result.status} ]);
+                if(result.eventId == 'FlightStatusInfo') {
+                  display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' - ' + result.timestamp + ' - ' + result.status} ]);
+                } else {
+                  display('Passengers', 'Insurance payout clause triggered', [ { label: 'Insurees credited', error: error, value: result.flight + ' - ' + result.insureesCredited + ' insuree(s) credited' } ]);
+                }
+
             });
         })
 
     });
-
-
-    // async function getAirlines(contract) {
-    //   const airlines = await contract.getAirlines();
-    //   console.log(airlines);
-    //
-    //   airlines.forEach((airline) => {
-    //     console.log(airline);
-    //     //display('Airlines', '', [{ label: 'Airline -->', value: airline.}])
-    //
-    //   });
-    //
-    //
-    //   return airlines;
-    // }
 
 
 })();

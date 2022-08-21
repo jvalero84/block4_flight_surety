@@ -23,7 +23,7 @@ contract FlightSuretyData {
     uint8 private activeAirlinesCounter;
     uint256 private regAirlinesCounter;
 
-    uint256 private constant AIRLINE_FUNDING_FEE = 1; //TODO: change to 10 eth
+    uint256 private constant AIRLINE_FUNDING_FEE = 1 ether; //TODO: change to 10 eth
     uint256 private constant AIRLINE_REGISTRATION_CONSENSUS_PERCENT = 50;
     uint256 private constant FLIGHT_MAX_INSURANCE_FEE = 1 ether;
     uint8 private constant MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS = 4;
@@ -312,7 +312,6 @@ contract FlightSuretyData {
      flights[key].updatedTimestamp = timestamp;
      flights[key].airline = tx.origin;
      flights[key].statusCode = STATUS_CODE_UNKNOWN;
-     //registeredFlights.push(key);
    }
 
 
@@ -328,16 +327,13 @@ contract FlightSuretyData {
                             external
                             payable
                             requireIsOperational
-                            returns (string, bytes32)
+                            returns (string, bytes32, uint256)
     {
         require(msg.value <= FLIGHT_MAX_INSURANCE_FEE, "Insurance can't be purchased for more than 1 ether");
 
         bytes32 flightKey = getFlightKey(airline, flight, 0);
 
         Flight storage currentFlight = flights[flightKey];
-
-
-        //require(currentFlight.airline != address(0), "The flight has default values!!!!");
 
         Passenger memory buyer = Passenger({
                     account: tx.origin,
@@ -346,14 +342,23 @@ contract FlightSuretyData {
                     isCredited: false
                 });
 
-        require(currentFlight.airline == airline, "Ojo que la aerolinea no coincide!!");
-
         currentFlight.insurees[tx.origin] = buyer;
         currentFlight.insureeAddresses.push(tx.origin);
         airlines[airline].balance = airlines[airline].balance.add(msg.value);
-        return (airlines[airline].name, flight);
+        return (airlines[airline].name, flight, airlines[airline].balance);
 
     }
+
+    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+    bytes memory tempEmptyStringTest = bytes(source);
+    if (tempEmptyStringTest.length == 0) {
+        return 0x0;
+    }
+
+    assembly {
+        result := mload(add(source, 32))
+    }
+}
 
     /**
      *  @dev Credits payouts to insurees
@@ -367,19 +372,25 @@ contract FlightSuretyData {
                                 requireIsOperational
                                 returns (string, uint256)
     {
-      bytes32 flightKey = getFlightKey(airlineAddress, flightNumber, 0);
+      bytes32 fNumber = stringToBytes32(flightNumber);
+      bytes32 flightKey = getFlightKey(airlineAddress, fNumber, 0);
+
       Flight storage flight = flights[flightKey];
       Airline storage airline = airlines[airlineAddress];
+
       uint256 accountsTargetedForCredit = flight.insureeAddresses.length;
 
-      for (uint256 i = 0; i < accountsTargetedForCredit; i++) {
-        Passenger storage passenger = flight.insurees[flight.insureeAddresses[i]];
+      for (uint8 i = 0; i < accountsTargetedForCredit; i++) {
+        address insureeAddress = flight.insureeAddresses[i];
+        Passenger storage passenger = flight.insurees[insureeAddress];
 
         if(!passenger.isCredited) {
           uint256 amountToCredit = passenger.insuranceAmount.mul(15).div(10);
           passenger.isCredited = true;
           passenger.payoutAmount = amountToCredit;
-          insureeCredit[passenger.account] = insureeCredit[passenger.account].add(amountToCredit);
+
+          uint256 insureeBalance = insureeCredit[insureeAddress].add(amountToCredit);
+          insureeCredit[insureeAddress] = insureeBalance;
           airline.balance = airline.balance.sub(amountToCredit);
         }
       }
