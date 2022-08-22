@@ -26,6 +26,8 @@ import './flightsurety.css';
             populateFlightsDD(contract, 'flight-list');
             populatePassengersDD(passengers, 'insurees-list');
             populateFlightsDD(contract, 'or-flight-list');
+            DOM.elid('withdraw-funds').disabled = true;
+            DOM.elid('submit-oracle').disabled = true;
         //});
 
         // Add flight
@@ -35,7 +37,7 @@ import './flightsurety.css';
             // Write transaction
             contract.registerFlight(airline, flight, (error, result) => {
               console.log('registerFlightresult!!', error, result);
-                display('Fligh registration', '', [ { label: 'New Flight Generated:', error: error, value: result.flight} ]);
+                display('Fligh registration', '', [ { label: 'New Flight Registered:', error: error, value: result.flight} ]);
                 console.log(error, result);
                 if(error == null){
                   contract.addFlight(flight, airline);
@@ -43,8 +45,9 @@ import './flightsurety.css';
                   displayFlight(airlineName, result.flight, result.timestamp);
                   populateFlightsDD(contract, 'flight-list');
                   populateFlightsDD(contract, 'or-flight-list');
+                  DOM.elid('new-flight-number').value = '';
+                  DOM.elid('submit-oracle').disabled = false;
                 }
-
             });
         });
 
@@ -105,12 +108,16 @@ import './flightsurety.css';
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
                 if(result.eventId == 'FlightStatusInfo') {
-                  display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' - ' + result.timestamp + ' - ' + result.status} ]);
+                  display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' - ' + result.status} ]);
                 } else {
                   display('Passengers', 'Insurance payout clause triggered', [ { label: 'Insurees credited', error: error, value: result.flight + ' - ' + result.insureesCredited + ' insuree(s) credited' } ]);
                 }
 
             });
+        })
+
+        DOM.elid('clear-notifications').addEventListener('click', () => {
+          DOM.elid('display-wrapper').innerHTML='';
         })
 
     });
@@ -160,12 +167,12 @@ function populateAirlinesDD(activeAirlines) {
   );
 }
 
-function displayFlight(_airline, flight, timestamp){
+function displayFlight(_airline, flight, tstamp){
   let flightsTable = DOM.elid("flights-board");
   let flightRow = document.createElement("tr");
   let flightnumber = document.createElement("td");
   let airline = document.createElement("td");
-  let departure = document.createElement("td");
+  let timestamp = document.createElement("td");
 
   airline.appendChild(document.createTextNode(_airline));
   flightRow.appendChild(airline);
@@ -173,9 +180,9 @@ function displayFlight(_airline, flight, timestamp){
   flightnumber.appendChild(document.createTextNode(flight));
   flightRow.appendChild(flightnumber);
 
-  let formattedDep = new Date(parseInt(timestamp)).toString().substring(0,28)
-  departure.appendChild(document.createTextNode(formattedDep));
-  flightRow.appendChild(departure);
+  let formattedTS = new Date().toString();
+  timestamp.appendChild(document.createTextNode(formattedTS));
+  flightRow.appendChild(timestamp);
 
   flightsTable.appendChild(flightRow);
 

@@ -19,9 +19,10 @@
         </button>
     </nav>
 
-    <main class="container">
+    <main class="container" style="margin-top:80px;">
       <div id="display-wrapper" class="top-20">
       </div>
+      <btn class="btn btn-primary" id="clear-notifications">Clear Notifications</btn>
     </main>
       <!-- <div class="display-wrapper">
           <div class="top-20">
@@ -34,7 +35,7 @@
           </div>
       </div> -->
       <main class="section">
-          <div class="display-wrapper">
+
               <div class="top-20">
                   <h2>Fligh registration</h2>
               </div>
@@ -44,7 +45,7 @@
                   <input type="text" id="new-flight-number"> <btn class="btn btn-primary" id="register-flight">Register Flight</btn>
 
               </div>
-          </div>
+
           <div class="row top-20"></div>
 
           <table class="table table-sm table-dark" id="flights-board">
@@ -52,42 +53,64 @@
               <tr>
                 <th scope="col">Airline</th>
                 <th scope="col">Flight Number</th>
-                <th scope="col">Departure</th>
+                <th scope="col">Registration date</th>
               </tr>
             </thead>
           </table>
     </main>
 
     <main class="section">
-      <div class="display-wrapper">
+      <div class="top-20">
+          <h2>Fligh Status</h2>
+      </div>
+        <div class="row top-20">
+            <label class="form">Flight</label> <select id="or-flight-list"> </select> <button class="btn btn-primary" id="submit-oracle">Submit to Oracles</button>
+        </div>
+    </main>
+
+    <main class="section">
+      <!--<div class="display-wrapper">-->
           <div class="top-20">
-              <h2>What if something goes wrong..? Better safe than sorry!</h2>
+              <h2>Passengers</h2>
+          </div>
+          <div class="top-20">
+              <h3>What if something goes wrong..? Better safe than sorry!</h3>
           </div>
           <div class="row top-20">
               <label class="form" for="passenger-list">Passenger</label><select id="passenger-list"> </select>
               <label class="form" for="flight-list">Flight</label><select id="flight-list"> </select>
-              <label class="form">Insurance Amount(ETH)</label> <input id='insurance-amount' type="number" value = "0.5" min="0.01" max="1" step="0.01"/>
-                <btn class="btn btn-primary" id="buy-insurance">Purchase Insurance</btn>
+              <label class="form">Insurance Amount(ETH)</label> <input id='insurance-amount' type="number" value = "0.5" min="0.01" max="1" step="0.01"/><br>
+              <btn class="btn btn-primary" id="buy-insurance">Purchase Insurance</btn>
           </div>
-      </div>
+      <!--</div>-->
 
       <div class="row top-20"></div>
 
       <table class="table table-sm table-dark" id="insurances-purchased-board">
         <thead>
           <tr>
-            <th scope="col">Passenger</th>
-            <th scope="col">Airline</th>
-            <th scope="col">Flight Number</th>
-            <th scope="col">Amount(ETH)</th>
+            <th scope="col" style="width:40%;">Passenger</th>
+            <th scope="col" style="width:25%;">Airline</th>
+            <th scope="col" style="width:20%;">Flight Number</th>
+            <th scope="col" style="width:15%;">Amount(ETH)</th>
           </tr>
         </thead>
       </table>
 
+      <div class="row top-20"></div>
+
+      <div class="top-20">
+          <h2>Withdraw funds</h2>
+      </div>
+      <div class="row top-20">
+          <label class="form" for="insurees-list">Passenger</label><select id="insurees-list"><option value="">Please select a passenger</option></select>
+            <button class="btn btn-primary" id="withdraw-funds">Withdraw funds</button>
+      </div>
+
     </main>
 
 
-    <main class="section">
+    <!--<main class="section">
       <div class="display-wrapper">
           <div class="top-20">
               <h2>Withdraw funds</h2>
@@ -100,13 +123,9 @@
 
       <div class="row top-20"></div>
 
-    </main>
+    </main>-->
 
-    <main class="section">
-        <div class="row top-20">
-            <label class="form">Flight</label> <select id="or-flight-list"> </select> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-        </div>
-    </main>
+
 
 </body>
 

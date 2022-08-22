@@ -222,6 +222,13 @@ contract FlightSuretyApp {
     {
       bytes32 key = keccak256(abi.encodePacked(airline, flight, timestamp));
       oracleResponses[key].isOpen = false;
+      //Cleanup responses from current request to avoid issues if the same flight is requested to oracles.
+      oracleResponses[key].responses[0] = [address(0)];
+      oracleResponses[key].responses[10] = [address(0)];
+      oracleResponses[key].responses[20] = [address(0)];
+      oracleResponses[key].responses[30] = [address(0)];
+      oracleResponses[key].responses[40] = [address(0)];
+      oracleResponses[key].responses[50] = [address(0)];
       if(statusCode == 20) {
         var (airlineName, passengersCredited) = flightSuretyData.creditInsurees(flight, airline);
         emit flightInsureesCredited(flight, airlineName, passengersCredited);
