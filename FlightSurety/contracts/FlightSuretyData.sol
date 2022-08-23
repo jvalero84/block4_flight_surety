@@ -20,7 +20,7 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    uint8 private activeAirlinesCounter;
+    uint256 private activeAirlinesCounter;
     uint256 private regAirlinesCounter;
 
     uint256 private constant AIRLINE_FUNDING_FEE = 1 ether; //TODO: change to 10 eth
@@ -217,7 +217,7 @@ contract FlightSuretyData {
                             requireIsOperational
     {
         if(activeAirlinesCounter < MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS ){ // First MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS airlines are registered if submitted by a registered airline
-          require(airlines[tx.origin].isRegistered, "The airline submitting this request is not registered!");
+          require(airlines[tx.origin].isRegistered && airlines[tx.origin].isActive, "The airline submitting this request is not registered and active!");
           airlines[airline]= Airline({
             isRegistered: true,
             isActive: false,
@@ -225,7 +225,7 @@ contract FlightSuretyData {
             account: airline,
             balance: 0
           });
-          regAirlinesCounter.add(1);
+          regAirlinesCounter = regAirlinesCounter.add(1);
           emit airlineRegistered(name, regAirlinesCounter);
         } else {
           airlines[airline]= Airline({
@@ -253,7 +253,7 @@ contract FlightSuretyData {
 
       airlines[airline].balance = airlines[airline].balance.add(msg.value);
       airlines[airline].isActive = true;
-      activeAirlinesCounter.add(1);
+      activeAirlinesCounter = activeAirlinesCounter.add(1);
 
       return (airlines[airline].name, airlines[airline].balance);
    }
@@ -268,14 +268,14 @@ contract FlightSuretyData {
                            requireAirlineNotRegisteredAlready(airline)
                            requireDuplicateVoteNotAllowed(airline)
    {
-        require(activeAirlinesCounter > MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS, "Not enough active airlines to allow voting..");
+        require(activeAirlinesCounter >= MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS, "Not enough active airlines to allow voting..");
         votingHistory[msg.sender][airline] = true;
-        registrationVotes[airline].add(1);
+        registrationVotes[airline] = registrationVotes[airline].add(1);
         uint8 registrationThreshold = uint8(AIRLINE_REGISTRATION_CONSENSUS_PERCENT.mul(activeAirlinesCounter).div(100));
 
         if(registrationVotes[airline] >= registrationThreshold) {
           airlines[airline].isRegistered = true;
-          regAirlinesCounter.add(1);
+          regAirlinesCounter = regAirlinesCounter.add(1);
           emit airlineRegistered(airlines[airline].name, regAirlinesCounter);
         }
 
@@ -287,6 +287,14 @@ contract FlightSuretyData {
                       returns (bool,bool,string,address,uint256)
    {
      return (airlines[airline].isRegistered,airlines[airline].isActive,airlines[airline].name,airlines[airline].account,airlines[airline].balance);
+   }
+
+   function getActiveAirlinesCounter()
+                                     public
+                                     view
+                                     returns (uint256)
+   {
+     return activeAirlinesCounter;
    }
 
    function isAirline (address airline)
