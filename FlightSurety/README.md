@@ -21,6 +21,7 @@ To run truffle tests:
 `truffle test ./test/flightSurety.js`
 
 ![Oracles test](./screenshots/tests/oracles_test.png)
+
 ![Flight surety test](./screenshots/tests/flight_surety_test.png)
 
 * Before proceeding to run the dapp an the server, please remember to run `truffle migrate --reset` and startup ganache
@@ -62,7 +63,9 @@ To view dapp:
 
 
 ![Flight registry and oracle request](./screenshots/dapp/dapp_flight_registration_oracle_request.png)
+
 ![Insurees credited](./screenshots/dapp/insurees_credited.png)
+
 ![Insuree withdraw funds](./screenshots/dapp/insuree_withdraw_funds.png)
 
 
