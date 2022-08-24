@@ -23,7 +23,7 @@ contract FlightSuretyData {
     uint256 private activeAirlinesCounter;
     uint256 private regAirlinesCounter;
 
-    uint256 private constant AIRLINE_FUNDING_FEE = 1 ether; //TODO: change to 10 eth
+    uint256 private constant AIRLINE_FUNDING_FEE = 10 ether; //TODO: change to 10 eth
     uint256 private constant AIRLINE_REGISTRATION_CONSENSUS_PERCENT = 50;
     uint256 private constant FLIGHT_MAX_INSURANCE_FEE = 1 ether;
     uint8 private constant MIN_ACTIVE_AIRLINES_TO_APPLY_MULTIPARTY_CONSENSUS = 4;

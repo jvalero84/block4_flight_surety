@@ -213,6 +213,7 @@ contract FlightSuretyApp {
     */
     function processFlightStatus
                                 (
+                                    uint8 index,
                                     address airline,
                                     string memory flight,
                                     uint256 timestamp,
@@ -220,15 +221,9 @@ contract FlightSuretyApp {
                                 )
                                 internal
     {
-      bytes32 key = keccak256(abi.encodePacked(airline, flight, timestamp));
+      //bytes32 key = keccak256(abi.encodePacked(airline, flight, timestamp));
+      bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
       oracleResponses[key].isOpen = false;
-      //Cleanup responses from current request to avoid issues if the same flight is requested to oracles.
-      oracleResponses[key].responses[0] = [address(0)];
-      oracleResponses[key].responses[10] = [address(0)];
-      oracleResponses[key].responses[20] = [address(0)];
-      oracleResponses[key].responses[30] = [address(0)];
-      oracleResponses[key].responses[40] = [address(0)];
-      oracleResponses[key].responses[50] = [address(0)];
       if(statusCode == 20) {
         var (airlineName, passengersCredited) = flightSuretyData.creditInsurees(flight, airline);
         emit flightInsureesCredited(flight, airlineName, passengersCredited);
@@ -339,13 +334,14 @@ contract FlightSuretyApp {
                                     uint256 timestamp,
                                     uint8 statusCode
                                     )
-                                    view
                                     external
                                     returns (bool)
     {
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         uint256 responsesCount = oracleResponses[key].responses[statusCode].length;
         if (responsesCount >= MIN_RESPONSES){
+          //Once the OracleResponses info will not be needed anymore is time to cleanup for potential subsequent requests of same key..
+          cleanupOracleResponses(key);
           return true;
         } else {
           return false;
@@ -382,18 +378,43 @@ contract FlightSuretyApp {
         // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
-            //Does it makes sense to keep processing responses for a specific airline-flight-timestamp once MIN_RESPONSES reached?
-            //oracleResponses[key].isOpen = false;
 
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
             // Handle flight status as appropriate
-            processFlightStatus(airline, flight, timestamp, statusCode);
+            processFlightStatus(index, airline, flight, timestamp, statusCode);
 
-            //return false; //To signal to the server that a consensus has been reached. No need to keep submitting responses.
         }
+    }
 
-        //return true;
+    function emitEventOracleConsensusNotReached(
+                                                  uint8 index,
+                                                  address airline,
+                                                  string flight,
+                                                  uint256 timestamp,
+                                                  uint8 statusCode
+                                               )
+                                               external
+                                               requireIsOperational()
+    {
+        emit FlightStatusInfo(airline, flight, timestamp, statusCode);
+        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+        cleanupOracleResponses(key);
+
+    }
+
+    function cleanupOracleResponses(
+                                      bytes32 flightkey
+                                   )
+                                   internal
+                                   requireIsOperational()
+    {
+      oracleResponses[flightkey].responses[0] = [address(0)];
+      oracleResponses[flightkey].responses[10] = [address(0)];
+      oracleResponses[flightkey].responses[20] = [address(0)];
+      oracleResponses[flightkey].responses[30] = [address(0)];
+      oracleResponses[flightkey].responses[40] = [address(0)];
+      oracleResponses[flightkey].responses[50] = [address(0)];
     }
 
 

@@ -54,16 +54,14 @@ flightSuretyApp.events.OracleRequest({
     if (error) console.log(error)
     console.log(`event OracleRequest ${event.returnValues.index} - ${event.returnValues.airline} - ${event.returnValues.flight} - ${event.returnValues.timestamp}`);
     submitOracleResponse(event.returnValues);
-    //console.log(event)
 });
 
 flightSuretyApp.events.FlightStatusInfo({
     fromBlock: 0
   }, function (error, event) {
     if (error) console.log(error)
-    //console.log(event)
+
     console.log(`event FlightStatusInfo ${event.returnValues.airline} - ${event.returnValues.flight} - ${event.returnValues.timestamp} - ${event.returnValues.status}`);
-    //console.log(event)
 });
 
 async function submitOracleResponse(requestedFlightData) {
@@ -79,12 +77,10 @@ async function submitOracleResponse(requestedFlightData) {
                          from:account
                        }
                      );
-    //console.log(`--> moreResponsesNeeded: ${moreResponsesNeeded}`);
     if(regResult[0] == index || regResult[1] == index || regResult[2] == index) { // This oracle is elegible to supply data for this flight
       //Get a random response code
       let randomIndex = Math.floor(Math.random() * (flightStatusCodes.length -1));
       console.log(`oracle ${i - 40} producing response with index ${randomIndex} and code ${flightStatusCodes[randomIndex]}`);
-      //try{
         await flightSuretyApp.methods.submitOracleResponse(
                                                             index,
                                                             requestedFlightData.airline,
@@ -93,7 +89,7 @@ async function submitOracleResponse(requestedFlightData) {
                                                             flightStatusCodes[randomIndex]
                                                           ).send({
                                                                   from:account,
-                                                                  gas: web3.utils.toWei("9", "mwei")
+                                                                  gas: web3.utils.toWei("5", "mwei")
                                                                   }
                                                           );
         consensusReached = await flightSuretyApp.methods.hasConsensusBeenReached(
@@ -105,15 +101,26 @@ async function submitOracleResponse(requestedFlightData) {
                                                             ).call();
 
       console.log(`consensusReached: ${consensusReached}`);
-      //console.log(`moreResponsesNeeded: ${moreResponsesNeeded}`);
-      //} catch (e) {
-      //  console.log(Holaaaaaaaaa);
-      //}
 
     }
 
 
    }
+
+   if(!consensusReached){
+     await flightSuretyApp.methods.emitEventOracleConsensusNotReached(
+                                                         index,
+                                                         requestedFlightData.airline,
+                                                         requestedFlightData.flight,
+                                                         requestedFlightData.timestamp,
+                                                         STATUS_CODE_UNKNOWN
+                                                       ).send({
+                                                               from:account,
+                                                               gas: web3.utils.toWei("2", "mwei")
+                                                               }
+                                                       );
+   }
+
 }
 
 const app = express();

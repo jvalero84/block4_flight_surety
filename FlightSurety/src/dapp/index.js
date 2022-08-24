@@ -28,6 +28,8 @@ import './flightsurety.css';
             populateFlightsDD(contract, 'or-flight-list');
             DOM.elid('withdraw-funds').disabled = true;
             DOM.elid('submit-oracle').disabled = true;
+            DOM.elid('buy-insurance').disabled = true;
+            DOM.elid('register-flight').disabled = true;
         //});
 
         // Add flight
@@ -46,7 +48,9 @@ import './flightsurety.css';
                   populateFlightsDD(contract, 'flight-list');
                   populateFlightsDD(contract, 'or-flight-list');
                   DOM.elid('new-flight-number').value = '';
+                  DOM.elid('register-flight').disabled = true;
                   DOM.elid('submit-oracle').disabled = false;
+                  DOM.elid('buy-insurance').disabled = false;
                 }
             });
         });
@@ -114,11 +118,19 @@ import './flightsurety.css';
                 }
 
             });
-        })
+        });
 
         DOM.elid('clear-notifications').addEventListener('click', () => {
           DOM.elid('display-wrapper').innerHTML='';
-        })
+        });
+
+        DOM.elid('new-flight-number').addEventListener('input', () => {
+          if(DOM.elid('new-flight-number').value === ''){
+            DOM.elid('register-flight').disabled = true;
+          } else {
+            DOM.elid('register-flight').disabled = false;
+          }
+        });
 
     });
 
